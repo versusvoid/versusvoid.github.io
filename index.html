@@ -71,13 +71,27 @@
                 var count = 0;
                 for(var j = 0; j < json.elements.length && count < 10000; count++ )
                 {
-                    var points = new Array();
+                    var nodes = new Array();
+                    var baseJ = j;
                     for(var i = 0; json.elements[j].type === "node" && i < 100000; i++, j++)
                     {
-                        points[i] = new L.LatLng(json.elements[j].lat, json.elements[j].lon);
+                        nodes[i] = json.elements[j].id;
                     }
+                    if( json.elements[j].type !== "way") 
+                        console.warning("Not way " + j);
+                   
+                    var points = new Array();
+                    for( var i = 0; i < json.elements[j].nodes.length; i++ ){
+                        for( var k = 0; k < nodes.length; k++) {
+                            if( json.elements[j].nodes[i] == nodes[k] ){
+                                points[i] = new L.LatLng(json.elements[baseJ + k].lat, json.elements[baseJ + k].lon);
+                                break;
+                            }
+                        }
+                    }
+
                     var polyline = L.polyline(points, {color: get_random_color(), opacity: 0.75}).addTo(map);
-                    
+            
                     polyline.on('click', function(inJ){ return (function(){console.log(json.elements[inJ]);}); }(j));
                     
                     while( j < json.elements.length && json.elements[j].type !== "node" )
