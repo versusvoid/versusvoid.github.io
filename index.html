@@ -24,8 +24,8 @@
             var motorways = L.tileLayer(cloudmadeUrl, {styleId: 46561, attribution: cloudmadeAttribution}),
                 midnight  = L.tileLayer(cloudmadeUrl, {styleId: 999,   attribution: cloudmadeAttribution});
             var map = L.map('map', {
-                center: new L.LatLng(59.956271, 30.310031),
-                zoom: 9,
+                center: new L.LatLng(59.96231, 30.30836),
+                zoom: 13,
                 layers: [midnight, motorways]
             });
 
@@ -40,7 +40,6 @@
             setTimeout(function(){
                 polyline.setStyle({color: 'green', opactity: 1});
             }, 5000);
-*/
             var polygon = L.polygon([
                 [59.96575, 30.23369],
                 [59.96506, 30.27420],
@@ -55,6 +54,7 @@
             ]).addTo(map);
             
             map.fitBounds(polygon.getBounds());
+*/
 
             var popup = L.popup();
 
@@ -104,8 +104,6 @@
     <head>
     <body onload="initMap()">
         void-void
-        <br />
-        <br />
         <br />
         <br />
         <br />
