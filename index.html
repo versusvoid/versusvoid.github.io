@@ -63,6 +63,17 @@
 
             var map;
 
+            var popup = L.popup();
+
+            function onMapClick(e)
+            {
+                popup
+                    .setLatLng(e.latlng)
+                    .setContent("You clicked the map at " + e.latlng.toString())
+                    .openOn(map);
+            }
+
+
             function initMap()
             {
                 var apiKey = '460a360c630e43849b9f1ede2511e713';
@@ -109,16 +120,6 @@
                 map.fitBounds(polygon.getBounds());
 				*/
 
-                var popup = L.popup();
-
-                function onMapClick(e)
-                {
-                    popup
-                        .setLatLng(e.latlng)
-                        .setContent("You clicked the map at " + e.latlng.toString())
-                        .openOn(map);
-                }
-
                 map.on('click', onMapClick);
 
                 $.getJSON('ways.json', onMapLoaded);
@@ -146,6 +147,7 @@
                 for (wayId in ways)
                 {
                     var way = ways[wayId];
+                    var isOneWay = way['tags']['oneway'] === 'yes';
                     for (var i = 0; i < way.nodes.length - 1; i++)
                     {
                         if (way.nodes[i] in idToIndex &&
@@ -162,6 +164,16 @@
                                 opacity: 0.75
                             })
                                 .addTo(map);
+                            polyline.on('click', function (inV1Id, inV2Id, isBidirect)
+                            {
+                                return (function (e)
+                                {
+                                    console.log("Click on edge from " + inV1Id + " to " + inV2Id + (isBidirect?" bidirect":" directed"));
+                                    edgeClicked(e, inV1Id, inV2Id, isBidirect);
+                                });
+                            }(v1id, v2id, isOneWay));
+
+
 
                             var edge = {
                                 'ind1': v1id,
@@ -171,7 +183,10 @@
                                 'ver': 0
                             };
                             v1.edges.push(edge);
-                            v2.edges.push(edge);
+                            if( !isOneWay )
+                            {
+                                v2.edges.push(edge);
+                            }
                         }
                         else
                         {
@@ -181,8 +196,6 @@
                         }
                     }
                 }
-
-                setTimeout(updateMap, 5000);
 
                 /*
                 var count = 0;
@@ -230,6 +243,70 @@
 				*/
             }
 
+            var path = {source: null, selectingSource: false, dest: undefined, selectingDest: false};
+            function selectSource()
+            {
+                path.selectingSource = true;
+                path.selectingDest = false;
+            }
+            function selectDest()
+            {
+                path.selectingDest = true;
+                path.selectingSource = false;
+            }
+            function edgeClicked(e, v1id, v2id, isBidirect)
+            {
+                if( path.selectingSource )
+                {
+                    if( path.source != null )
+                    {
+                        map.removeControl(path.source.marker);
+                    }
+                    else
+                    {
+                        path.source = {marker: null};
+                    }
+                    path.source.marker = L.marker([e.latlng.lat, e.latlng.lng]).addTo(map);
+                    path.selectingSource = false;
+                }
+                else if( path.selectingDest )
+                {
+                    if( path.dest != null )
+                    {
+                        map.removeControl(path.dest.marker);
+                    }
+                    else
+                    {
+                        path.dest = {marker: null};
+                    }
+                    path.dest.marker = L.marker([e.latlng.lat, e.latlng.lng]).addTo(map);
+                    path.selectingDest = false;
+                }
+                else
+                {
+                    onMapClick(e);
+                }
+            }
+            
+            var timeoutId;
+            function switchUpdating()
+            {
+                if( timeoutId !== undefined )
+                {
+                    console.log("Updating stopped");
+                    clearTimeout(timeoutId);
+                    timeoutId = undefined;
+                    $("#switch").text("Start updating");
+                }
+                else
+                {
+                    console.log("Updating started");
+                    timeoutId = setTimeout(updateMap, 5000);
+                    $("#switch").text("Stop updating");
+                }
+                
+            }
+
             var iteration = 0;
 
             function updateMap()
@@ -275,11 +352,18 @@
                 }
                 console.log("Iteration:" + iteration + ", updated edges: " + updated);
                 iteration++;
-                setTimeout(updateMap, 5000);
+                if( timeoutId !== undefined )
+                {
+                    timeoutId = setTimeout(updateMap, 5000);
+                }
             }
         </script>
     </head>
     <body onload="initMap()">
+        <button id="switch" onclick="switchUpdating()">Start updating</button>
+        <br />
+        <button id="starter" onclick="selectSource()">Select start</button>
+        <button id="dester" onclick="selectDest()">Select destination</button>
         <div id="map" style="height: 600px"></div>
         <table width="100%">
             <tr>
