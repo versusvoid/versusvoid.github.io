@@ -22,13 +22,13 @@
 
         var trafficColors = ["#000000",
                 "#00FF00",
-                "#66FF33",
+                "#33FF00",
+                "#66FF00",
+                "#99FF00",
                 "#CCFF00",
-                "#CCFF33",
-                "#FFFF33",
                 "#FFFF00",
-                "#FFCC33",
                 "#FFCC00",
+                "#FF9900",
                 "#FF6600",
                 "#FF3300",
                 "#FF0000"];
@@ -95,7 +95,7 @@
                     vertexies[vertexies.length] = json.elements[i];
                     delete vertexies[vertexies.length - 1]['type']; // потому что не нужен
                     delete vertexies[vertexies.length - 1]['id'];   // потому что не нужен
-                    vertexies[vertexies.length - 1]['edges'] = new Array();
+                    vertexies[vertexies.length - 1].edges = new Array();
                 }
             }
 
@@ -107,13 +107,16 @@
                    if( way.nodes[i] in idToIndex && 
                         way.nodes[i + 1] in idToIndex )
                    {
-                       var v1 = vertexies[idToIndex[way.nodes[i]]];
+                       var v1id = idToIndex[way.nodes[i]];
+                       var v1 = vertexies[v1id];
                        var v2id = idToIndex[way.nodes[i + 1]];
                        var v2 = vertexies[v2id];
                        var points = [new L.LatLng(v1.lat, v1.lon), new L.LatLng(v2.lat, v2.lon)];
                        var polyline = L.polyline(points, {color: trafficColors[1], opacity: 0.75}).addTo(map);
- 
-                       v1['edges'].push({'ind':v2id, 'load': 1, 'line': polyline});
+                        
+                       var edge = {'ind1': v1id, 'ind2': v2id, 'load': 1, 'line': polyline, 'ver': 0};
+                       v1.edges.push(edge);
+                       v2.edges.push(edge);
                    }
                    else
                    {
@@ -123,6 +126,8 @@
                    }
                }
             }
+
+            setTimeout(updateMap, 5000);
 /*
             var count = 0;
             for(var j = 0; j < json.elements.length && count < 10000; count++ )
@@ -154,24 +159,66 @@
             console.log(count + " ways");
 */
         }
+
+        function updateMap()
+        {
+            var newVer;
+            for(var i = 0; i < vertexies.length; i++)
+            {
+                if( vertexies[i].edges.length > 0 )
+                {
+                    newVer = vertexies[i].edges[0]['ver'] + 1;
+                    break;
+                }
+             }
+             var updated = 0;
+           for(var i = 0; i < vertexies.length; i++)
+           {
+               var edges = vertexies[i].edges;
+               for(var j = 0; j < edges.length; j++)
+               {
+                   if( edges[j]['ver'] !== newVer )
+                   {
+                       var newLoad = Math.round(edges[j]['load'] + (Math.random()*4 - 2));
+                       if( newLoad < 1 )
+                       {
+                           newLoad = 1;
+                       }
+                       else if ( newLoad > 10 )
+                       {
+                           newLoad = 10;
+                       }
+                       
+                       if( newLoad !== edges[j]['load'] )
+                       {
+                           updated++;
+
+                           edges[j]['load'] = newLoad;
+                           edges[j]['line'].setStyle({color: trafficColors[newLoad], opacity: 0.75});
+                       }
+
+                       edges[j]['ver'] = newVer;
+                   }
+               }
+           }
+           console.log("Updated edges: " + updated); 
+            setTimeout(updateMap, 5000);
+        }
         </script>
     <head>
     <body onload="initMap()">
-        void-void
-        <br />
-        <br />
         <div id="map" style="height: 600px"></div>
 
         <table width="100%">
             <tr>
                 <td bgcolor="00FF00">&nbsp;</td>
-                <td bgcolor="66FF33">&nbsp;</td>
+                <td bgcolor="33FF00">&nbsp;</td>
+                <td bgcolor="66FF00">&nbsp;</td>
+                <td bgcolor="99FF00">&nbsp;</td>
                 <td bgcolor="CCFF00">&nbsp;</td>
-                <td bgcolor="CCFF33">&nbsp;</td>
-                <td bgcolor="FFFF33">&nbsp;</td>
                 <td bgcolor="FFFF00">&nbsp;</td>
-                <td bgcolor="FFCC33">&nbsp;</td>
                 <td bgcolor="FFCC00">&nbsp;</td>
+                <td bgcolor="FF9900">&nbsp;</td>
                 <td bgcolor="FF6600">&nbsp;</td>
                 <td bgcolor="FF3300">&nbsp;</td>
                 <td bgcolor="FF0000">&nbsp;</td>
