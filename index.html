@@ -8,207 +8,278 @@
         <![endif]-->
         <script src="http://cdn.leafletjs.com/leaflet-0.5.1/leaflet.js"></script>
         <script>
-        function get_random_color() {
-            var letters = '0123456789ABCDEF'.split('');
-            var color = '#';
-            for (var i = 0; i < 6; i++ ) {
-                color += letters[Math.round(Math.random() * 15)];
+            function get_random_color()
+            {
+                var letters = '0123456789ABCDEF'.split('');
+                var color = '#';
+                for (var i = 0; i < 6; i++)
+                {
+                    color += letters[Math.round(Math.random() * 15)];
+                }
+                return color;
             }
-            return color;
-        }
-        
-        var idToIndex = {};
-        var vertexies = new Array();
 
-        var trafficColors = ["#000000",
-                "#00FF00",
-                "#33FF00",
-                "#66FF00",
-                "#99FF00",
-                "#CCFF00",
-                "#FFFF00",
-                "#FFCC00",
-                "#FF9900",
-                "#FF6600",
-                "#FF3300",
-                "#FF0000"];
+            var idToIndex = {};
+            var vertexies = new Array();
 
-        var map;
-        
-        function initMap()
-        {
-            var apiKey = '460a360c630e43849b9f1ede2511e713';
-            
-            map = L.map('map').setView([59.96231, 30.30836],13);
-            L.tileLayer('http://{s}.tile.cloudmade.com/' + apiKey + '/999/256/{z}/{x}/{y}.png', {
-                attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://cloudmade.com">CloudMade</a>',
-                maxZoom: 18
-            }).addTo(map);
+            var trafficColors = [
+                {
+                    color: "#000000"
+                },
+                {
+                    color: "#00FF00"
+                },
+                {
+                    color: "#33FF00"
+                },
+                {
+                    color: "#66FF00"
+                },
+                {
+                    color: "#99FF00"
+                },
+                {
+                    color: "#CCFF00"
+                },
+                {
+                    color: "#FFFF00"
+                },
+                {
+                    color: "#FFCC00"
+                },
+                {
+                    color: "#FF9900"
+                },
+                {
+                    color: "#FF6600"
+                },
+                {
+                    color: "#FF3300"
+                },
+                {
+                    color: "#FF0000"
+                }
+            ];
 
-/*
-            var polyline = L.polyline([new L.LatLng(59.91, 30.304), new L.LatLng(59.941, 30.314031)], {color: 'red', opacity: 1}).addTo(map);
+            var map;
 
-            setTimeout(function(){
-                polyline.setStyle({color: 'green', opactity: 1});
-            }, 5000);
-            var polygon = L.polygon([
+            function initMap()
+            {
+                var apiKey = '460a360c630e43849b9f1ede2511e713';
+
+                map = L.map('map')
+                    .setView([59.96231, 30.30836], 13);
+                L.tileLayer('http://{s}.tile.cloudmade.com/' + apiKey + '/999/256/{z}/{x}/{y}.png',
+                {
+                    attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Imagery © <a href="http://cloudmade.com">CloudMade</a>',
+                    maxZoom: 18
+                })
+                    .addTo(map);
+
+                /*
+				var polyline = L.polyline([new L.LatLng(59.91, 30.304), new L.LatLng(59.941, 30.314031)],
+                {
+                    color: 'red',
+                    opacity: 1
+                })
+                    .addTo(map);
+
+                setTimeout(function ()
+                {
+                    polyline.setStyle(
+                    {
+                        color: 'green',
+                        opactity: 1
+                    });
+                }, 5000);
+                var polygon = L.polygon([
                 [59.96575, 30.23369],
-                [59.96506, 30.27420],
-                [59.96747, 30.28090],
-                [59.97228, 30.28467],
-                [59.98038, 30.31467],
-                [59.97623, 30.32656],
-                [59.96996, 30.33411],
-                [59.95346, 30.34012],
-                [59.94532, 30.30446],
-                [59.96326, 30.23403]
-            ]).addTo(map);
-            
-            map.fitBounds(polygon.getBounds());
-*/
-            var popup = L.popup();
+                 [59.96506, 30.27420],
+                 [59.96747, 30.28090],
+                 [59.97228, 30.28467],
+                 [59.98038, 30.31467],
+                 [59.97623, 30.32656],
+                 [59.96996, 30.33411],
+                 [59.95346, 30.34012],
+                 [59.94532, 30.30446],
+                 [59.96326, 30.23403]
+                ])
+                    .addTo(map);
 
-            function onMapClick(e) {
-                popup
-                    .setLatLng(e.latlng)
-                    .setContent("You clicked the map at " + e.latlng.toString())
-                    .openOn(map);
+                map.fitBounds(polygon.getBounds());
+				*/
+
+                var popup = L.popup();
+
+                function onMapClick(e)
+                {
+                    popup
+                        .setLatLng(e.latlng)
+                        .setContent("You clicked the map at " + e.latlng.toString())
+                        .openOn(map);
+                }
+
+                map.on('click', onMapClick);
+
+                $.getJSON('ways.json', onMapLoaded);
             }
 
-            map.on('click', onMapClick);
-        
-            $.getJSON('ways.json', onMapLoaded);
-        }
-
-        function onMapLoaded(json) 
-        {
-            var ways = {};
-            for(var i = 0; i < json.elements.length; i++)
+            function onMapLoaded(json)
             {
-                if( json.elements[i].type === "way" )
+                var ways = {};
+                for (var i = 0; i < json.elements.length; i++)
                 {
-                    ways[json.elements[i].id] = json.elements[i];
+                    if (json.elements[i].type === "way")
+                    {
+                        ways[json.elements[i].id] = json.elements[i];
+                    }
+                    else if (json.elements[i].type === "node")
+                    {
+                        idToIndex[json.elements[i].id] = vertexies.length;
+                        vertexies[vertexies.length] = json.elements[i];
+                        delete vertexies[vertexies.length - 1]['type']; // потому что не нужен
+                        delete vertexies[vertexies.length - 1]['id']; // потому что не нужен
+                        vertexies[vertexies.length - 1].edges = new Array();
+                    }
                 }
-                else if( json.elements[i].type === "node" )
-                {
-                    idToIndex[json.elements[i].id] = vertexies.length;
-                    vertexies[vertexies.length] = json.elements[i];
-                    delete vertexies[vertexies.length - 1]['type']; // потому что не нужен
-                    delete vertexies[vertexies.length - 1]['id'];   // потому что не нужен
-                    vertexies[vertexies.length - 1].edges = new Array();
-                }
-            }
 
-            for( wayId in ways )
-            {
-                var way = ways[wayId];
-               for(var i = 0; i < way.nodes.length - 1; i++)
-               {
-                   if( way.nodes[i] in idToIndex && 
-                        way.nodes[i + 1] in idToIndex )
-                   {
-                       var v1id = idToIndex[way.nodes[i]];
-                       var v1 = vertexies[v1id];
-                       var v2id = idToIndex[way.nodes[i + 1]];
-                       var v2 = vertexies[v2id];
-                       var points = [new L.LatLng(v1.lat, v1.lon), new L.LatLng(v2.lat, v2.lon)];
-                       var polyline = L.polyline(points, {color: trafficColors[1], opacity: 0.75}).addTo(map);
-                        
-                       var edge = {'ind1': v1id, 'ind2': v2id, 'load': 1, 'line': polyline, 'ver': 0};
-                       v1.edges.push(edge);
-                       v2.edges.push(edge);
-                   }
-                   else
-                   {
-                       console.warn(way);
-                       console.warn(way.nodes[i]);
-                       console.warn(way.nodes[i + 1]);
-                   }
-               }
-            }
-
-            setTimeout(updateMap, 5000);
-/*
-            var count = 0;
-            for(var j = 0; j < json.elements.length && count < 10000; count++ )
-            {
-                var nodes = new Array();
-                var baseJ = j;
-                for(var i = 0; json.elements[j].type === "node" && i < 100000; i++, j++)
+                for (wayId in ways)
                 {
-                    nodes[i] = json.elements[j].id;
-                }
-               
-                var points = new Array();
-                for( var i = 0; i < json.elements[j].nodes.length; i++ ){
-                    for( var k = 0; k < nodes.length; k++) {
-                        if( json.elements[j].nodes[i] == nodes[k] ){
-                            points[i] = new L.LatLng(json.elements[baseJ + k].lat, json.elements[baseJ + k].lon);
-                            break;
+                    var way = ways[wayId];
+                    for (var i = 0; i < way.nodes.length - 1; i++)
+                    {
+                        if (way.nodes[i] in idToIndex &&
+                            way.nodes[i + 1] in idToIndex)
+                        {
+                            var v1id = idToIndex[way.nodes[i]];
+                            var v1 = vertexies[v1id];
+                            var v2id = idToIndex[way.nodes[i + 1]];
+                            var v2 = vertexies[v2id];
+                            var points = [new L.LatLng(v1.lat, v1.lon), new L.LatLng(v2.lat, v2.lon)];
+                            var polyline = L.polyline(points,
+                            {
+                                color: trafficColors[1].color,
+                                opacity: 0.75
+                            })
+                                .addTo(map);
+
+                            var edge = {
+                                'ind1': v1id,
+                                'ind2': v2id,
+                                'load': 1,
+                                'line': polyline,
+                                'ver': 0
+                            };
+                            v1.edges.push(edge);
+                            v2.edges.push(edge);
+                        }
+                        else
+                        {
+                            console.warn(way);
+                            console.warn(way.nodes[i]);
+                            console.warn(way.nodes[i + 1]);
                         }
                     }
                 }
 
-                var polyline = L.polyline(points, {color: get_random_color(), opacity: 0.75}).addTo(map);
-        
-                polyline.on('click', function(inJ){ return (function(){console.log(json.elements[inJ]);}); }(j));
-                
-                while( j < json.elements.length && json.elements[j].type !== "node" )
-                    j++;
-            }
-            console.log(count + " ways");
-*/
-        }
+                setTimeout(updateMap, 5000);
 
-        function updateMap()
-        {
-            var newVer;
-            for(var i = 0; i < vertexies.length; i++)
-            {
-                if( vertexies[i].edges.length > 0 )
+                /*
+                var count = 0;
+                for (var j = 0; j < json.elements.length && count < 10000; count++)
                 {
-                    newVer = vertexies[i].edges[0]['ver'] + 1;
-                    break;
+                    var nodes = new Array();
+                    var baseJ = j;
+                    for (var i = 0; json.elements[j].type === "node" && i < 100000; i++, j++)
+                    {
+                        nodes[i] = json.elements[j].id;
+                    }
+
+                    var points = new Array();
+                    for (var i = 0; i < json.elements[j].nodes.length; i++)
+                    {
+                        for (var k = 0; k < nodes.length; k++)
+                        {
+                            if (json.elements[j].nodes[i] == nodes[k])
+                            {
+                                points[i] = new L.LatLng(json.elements[baseJ + k].lat, json.elements[baseJ + k].lon);
+                                break;
+                            }
+                        }
+                    }
+
+                    var polyline = L.polyline(points,
+                    {
+                        color: get_random_color(),
+                        opacity: 0.75
+                    })
+                        .addTo(map);
+
+                    polyline.on('click', function (inJ)
+                    {
+                        return (function ()
+                        {
+                            console.log(json.elements[inJ]);
+                        });
+                    }(j));
+
+                    while (j < json.elements.length && json.elements[j].type !== "node")
+                        j++;
                 }
-             }
-             var updated = 0;
-           for(var i = 0; i < vertexies.length; i++)
-           {
-               var edges = vertexies[i].edges;
-               for(var j = 0; j < edges.length; j++)
-               {
-                   if( edges[j]['ver'] !== newVer )
-                   {
-                       var newLoad = Math.round(edges[j]['load'] + (Math.random()*4 - 2));
-                       if( newLoad < 1 )
-                       {
-                           newLoad = 1;
-                       }
-                       else if ( newLoad > 10 )
-                       {
-                           newLoad = 10;
-                       }
-                       
-                       if( newLoad !== edges[j]['load'] )
-                       {
-                           updated++;
+                console.log(count + " ways");
+				*/
+            }
 
-                           edges[j]['load'] = newLoad;
-                           edges[j]['line'].setStyle({color: trafficColors[newLoad], opacity: 0.75});
-                       }
+            var iteration = 0;
 
-                       edges[j]['ver'] = newVer;
-                   }
-               }
-           }
-           console.log("Updated edges: " + updated); 
-            setTimeout(updateMap, 5000);
-        }
+            function updateMap()
+            {
+                var newVer;
+                for (var i = 0; i < vertexies.length; i++)
+                {
+                    if (vertexies[i].edges.length > 0)
+                    {
+                        newVer = vertexies[i].edges[0]['ver'] + 1;
+                        break;
+                    }
+                }
+                var updated = 0;
+                for (var i = 0; i < vertexies.length; i++)
+                {
+                    var edges = vertexies[i].edges;
+                    for (var j = 0; j < edges.length; j++)
+                    {
+                        if (edges[j]['ver'] !== newVer)
+                        {
+                            var newLoad = Math.round(edges[j]['load'] + (Math.random() * 4 - 2));
+                            if (newLoad < 1)
+                            {
+                                newLoad = 1;
+                            }
+                            else if (newLoad > 10)
+                            {
+                                newLoad = 10;
+                            }
+
+                            if (newLoad !== edges[j]['load'])
+                            {
+                                updated++;
+
+                                edges[j]['load'] = newLoad;
+                                edges[j]['line'].setStyle(trafficColors[newLoad]);
+                            }
+
+                            edges[j]['ver'] = newVer;
+                        }
+                    }
+                }
+                console.log("Iteration:" + iteration + ", updated edges: " + updated);
+                setTimeout(updateMap, 5000);
+            }
         </script>
-    <head>
+    </head>
     <body onload="initMap()">
         <div id="map" style="height: 600px"></div>
-
         <table width="100%">
             <tr>
                 <td bgcolor="00FF00">&nbsp;</td>
