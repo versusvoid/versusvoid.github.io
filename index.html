@@ -264,12 +264,9 @@
                     {
                         map.removeLayer(path.source.marker);
                         delete path.source.marker;
-                        path.source = null;
                     }
-                    else
-                    {
-                        path.source = {marker: null, edge: null};
-                    }
+                    path.source = {marker: null, edge: null};
+                    
                     if( isBidirect )
                     {
                         var x1 = vertexies[v1id].lat - e.latlng.lat;
@@ -304,12 +301,9 @@
                     {
                         map.removeLayer(path.dest.marker);
                         delete path.dest.marker;
-                        path.dest = null;
                     }
-                    else
-                    {
-                        path.dest = {marker: null, edge: null};
-                    }
+                    path.dest = {marker: null, edge: null};
+                    
                     if( isBidirect )
                     {
                         var x1 = vertexies[v1id].lat - e.latlng.lat;
@@ -342,6 +336,13 @@
                 {
                     onMapClick(e);
                     return;
+                }
+
+                if( path.line !== null )
+                {
+                    map.removeLayer(path.line);
+                    delete path.line;
+                    path.line = null;
                 }
 
                 if( path.source !== null && path.dest !== null )
@@ -444,6 +445,13 @@
                             vertexies[pathNodes[0]].lon));
                 }
                 while( pathNodes[0] !== path.source.edge.v1 && pathNodes.length < 3000 );
+
+                if( path.line !== null )
+                {
+                    map.removeLayer(path.line);
+                    delete path.line;
+                    path.line = null;
+                }
                 
                 path.line = 
                     L.polyline(pathPoints,
