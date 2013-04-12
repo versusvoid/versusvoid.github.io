@@ -180,7 +180,8 @@
                                 'ind2': v2id,
                                 'load': 1,
                                 'line': polyline,
-                                'ver': 0
+                                'ver': 0,
+                                'used': false
                             };
                             v1.edges.push(edge);
                             if( !isOneWay )
@@ -339,11 +340,15 @@
                 vert[0] = path.source.v1;
                 var lengthes = new Array(vertexies.length);
                 for(var i = 0; i < lengthes.length; i++)
+                {
                     lengthes[i] = Number.POSITIVE_INFINITY;
+                    for( var j = 0; j < vertexies[i].edges.length; j++ )
+                    	vertexies[i].edges[j]['used'] = false;
+                }
 
                 while( vert.length > 0 )
                 {
-                    
+                    for( var i = 0; i < )
                 }
             }
             
