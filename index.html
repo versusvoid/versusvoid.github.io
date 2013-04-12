@@ -261,10 +261,31 @@
                     if( path.source != null )
                     {
                         map.removeLayer(path.source.marker);
+                        delete path.source.marker;
+                        path.source = null;
                     }
                     else
                     {
-                        path.source = {marker: null};
+                        path.source = {marker: null, edge: null};
+                    }
+                    if( isBidirect )
+                    {
+                        var x1 = vertexies[v1id].lat - e.latlng.lat;
+                        var y1 = vertexies[v1id].lon - e.latlng.lon;
+                        var x2 = vertexies[v2id].lat - e.latlng.lat;
+                        var y2 = vertexies[v2id].lon - e.latlng.lon;
+                        if( x1*x1 + y1*y1 < x2*x2 + y2*y2 )
+                        {
+                            path.source.edge = {v1: v1id, v2: v2id};
+                        }
+                        else
+                        {
+                            path.source.edge = {v1: v2id, v2: v1id};
+                        }
+                    }
+                    else
+                    {
+                        path.source.edge = {v1: v1id, v2: v2id};
                     }
                     path.source.marker = L.marker([e.latlng.lat, e.latlng.lng]).addTo(map);
                     path.selectingSource = false;
@@ -274,10 +295,31 @@
                     if( path.dest != null )
                     {
                         map.removeLayer(path.dest.marker);
+                        delete path.dest.marker;
+                        path.dest = null;
                     }
                     else
                     {
-                        path.dest = {marker: null};
+                        path.dest = {marker: null, edge: null};
+                    }
+                    if( isBidirect )
+                    {
+                        var x1 = vertexies[v1id].lat - e.latlng.lat;
+                        var y1 = vertexies[v1id].lon - e.latlng.lon;
+                        var x2 = vertexies[v2id].lat - e.latlng.lat;
+                        var y2 = vertexies[v2id].lon - e.latlng.lon;
+                        if( x1*x1 + y1*y1 < x2*x2 + y2*y2 )
+                        {
+                            path.dest.edge = {v1: v1id, v2: v2id};
+                        }
+                        else
+                        {
+                            path.dest.edge = {v1: v2id, v2: v1id};
+                        }
+                    }
+                    else
+                    {
+                        path.dest.edge = {v1: v1id, v2: v2id};
                     }
                     path.dest.marker = L.marker([e.latlng.lat, e.latlng.lng]).addTo(map);
                     path.selectingDest = false;
