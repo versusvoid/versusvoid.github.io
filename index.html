@@ -173,18 +173,19 @@
                                 });
                             }(v1id, v2id, isOneWay));
 
-
-
+                            var x = v1.lat*10000 - v2.lat*10000;
+                            var y = v1.lon*10000 - v1.lon*10000;
                             var edge = {
-                                'ind1': v1id,
-                                'ind2': v2id,
-                                'load': 1,
-                                'line': polyline,
-                                'ver': 0,
-                                'used': false
+                                v1: v1id,
+                                v2: v2id,
+                                load: 1,
+                                length: x*x + y*y,
+                                line: polyline,
+                                ver: 0,
+                                used: false
                             };
                             v1.edges.push(edge);
-                            if( !isOneWay )
+//                            if( !isOneWay )
                             {
                                 v2.edges.push(edge);
                             }
@@ -244,7 +245,7 @@
 				*/
             }
 
-            var path = {source: null, selectingSource: false, dest: undefined, selectingDest: false, line: null};
+            var path = {source: null, selectingSource: false, dest: null, selectingDest: false, line: null};
             function selectSource()
             {
                 path.selectingSource = true;
@@ -288,7 +289,13 @@
                     {
                         path.source.edge = {v1: v1id, v2: v2id};
                     }
-                    path.source.marker = L.marker([e.latlng.lat, e.latlng.lng]).addTo(map);
+                    path.source.marker = 
+                        new L.Marker(
+                            new L.LatLng(e.latlng.lat, e.latlng.lng), 
+                            {
+                                title: "Start point"
+                            }
+                        ).addTo(map);
                     path.selectingSource = false;
                 }
                 else if( path.selectingDest )
@@ -322,34 +329,132 @@
                     {
                         path.dest.edge = {v1: v1id, v2: v2id};
                     }
-                    path.dest.marker = L.marker([e.latlng.lat, e.latlng.lng]).addTo(map);
+                    path.dest.marker =
+                        new L.Marker(
+                            new L.LatLng(e.latlng.lat, e.latlng.lng), 
+                            {
+                                title: "End point"
+                            }
+                        ).addTo(map);
                     path.selectingDest = false;
                 }
                 else
                 {
                     onMapClick(e);
+                    return;
+                }
+
+                if( path.source !== null && path.dest !== null )
+                {
+                    setTimeout(findPath, 100);
                 }
             }
+
+            var isSearchingPath = false;
 
             function findPath()
             {
                 if( path.source === null || path.dest === null )
                     return;
 
-                var vert = new Array();
-                vert[0] = path.source.v1;
+                if( isUpdating )
+                {
+                    startTimeout(findPath, 100);
+                    return;
+                }
+
+                isSearchingPath = true;
+
+                console.log("Prepare stage");
+
+                var vertQueue = new Array();
+                vertQueue[0] = path.source.edge.v1;
                 var lengthes = new Array(vertexies.length);
                 for(var i = 0; i < lengthes.length; i++)
                 {
-                    lengthes[i] = Number.POSITIVE_INFINITY;
                     for( var j = 0; j < vertexies[i].edges.length; j++ )
-                    	vertexies[i].edges[j]['used'] = false;
+                        vertexies[i].edges[j].used = false;
+                    lengthes[i] = {from: -1, len: Number.POSITIVE_INFINITY};
                 }
 
-                while( vert.length > 0 )
+                lengthes[path.source.edge.v1] = {from: -1, len: 0};
+
+                console.log("Stage one");
+
+                while( vertQueue.length > 0 )
                 {
-                    for( var i = 0; i < )
+                    var i = vertQueue.shift();
+                    for( var j = 0; j < vertexies[i].edges.length; j++ )
+                    {
+                        if( !vertexies[i].edges[j].used )
+                        {
+                            var edge = vertexies[i].edges[j];
+                            if( lengthes[i].len === Number.POSITIVE_INFINITY )
+                            {
+                                console.log("Fail at: " + i);
+                                return;
+                            }
+                            var otherVertex = (i === edge.v1 ? edge.v2 : edge.v1);
+                            var weight = edge.length*edge.load;
+                            if( lengthes[i].len + weight < lengthes[otherVertex].len )
+                            {
+                                lengthes[otherVertex] = {from: i, len: lengthes[i].len + weight};
+                            }
+                            edge.used = true;
+
+                            if( -1 === vertQueue.indexOf(otherVertex) )
+                            {
+                                vertQueue.push(otherVertex);
+                            }
+                        }
+                    }
                 }
+                for( var i = 0; i < lengthes.length; i++ )
+                {
+                    if( lengthes[i].from === -1 && vertexies[i].edges.length > 0 )
+                    {
+                        console.log(i);
+                        console.log(lengthes[i]);
+                        console.log(vertexies[i].edges);
+                    }
+                }
+
+                if( lengthes[path.dest.edge.v1].from === -1 )
+                {
+                    alert("No way!");
+                    console.log("No way!");
+                    return;
+                }
+                
+                console.log("Stage two");
+
+                var pathNodes = [path.dest.edge.v1];
+                console.log(path.dest.edge.v1);
+                var pathPoints = [new L.LatLng(vertexies[path.dest.edge.v1].lat, vertexies[path.dest.edge.v1].lon)];
+                do {
+                    if( lengthes[pathNodes[0]].from === -1 )
+                    {
+                        alert("No way!!");
+                        return;
+                    }
+                    pathNodes.unshift(lengthes[pathNodes[0]].from);
+                    pathPoints.unshift(
+                        new L.LatLng(
+                            vertexies[pathNodes[0]].lat, 
+                            vertexies[pathNodes[0]].lon));
+                }
+                while( pathNodes[0] !== path.source.edge.v1 && pathNodes.length < 3000 );
+                
+                path.line = 
+                    L.polyline(pathPoints,
+                    {
+                        color: get_random_color(),
+                        opacity: 0.75
+                    }).addTo(map);
+
+                isSearchingPath = false;
+
+                setTimeout(findPath, 13000);
             }
             
             var timeoutId;
@@ -371,16 +476,24 @@
                 
             }
 
+            var isUpdating = false;
             var iteration = 0;
 
             function updateMap()
             {
+                if( isSearchingPath )
+                {
+                    timeoutId = setTimeout(updateMap, 100);
+                    return;
+                }
+                isUpdating = true;
+                
                 var newVer;
                 for (var i = 0; i < vertexies.length; i++)
                 {
                     if (vertexies[i].edges.length > 0)
                     {
-                        newVer = vertexies[i].edges[0]['ver'] + 1;
+                        newVer = vertexies[i].edges[0].ver + 1;
                         break;
                     }
                 }
@@ -390,9 +503,9 @@
                     var edges = vertexies[i].edges;
                     for (var j = 0; j < edges.length; j++)
                     {
-                        if (edges[j]['ver'] !== newVer)
+                        if (edges[j].ver !== newVer)
                         {
-                            var newLoad = Math.round(edges[j]['load'] + (Math.random() * 4 - 2));
+                            var newLoad = Math.round(edges[j].load + (Math.random() * 4 - 2));
                             if (newLoad < 1)
                             {
                                 newLoad = 1;
@@ -402,15 +515,15 @@
                                 newLoad = 10;
                             }
 
-                            if (newLoad !== edges[j]['load'])
+                            if (newLoad !== edges[j].load)
                             {
                                 updated++;
 
-                                edges[j]['load'] = newLoad;
-                                edges[j]['line'].setStyle(trafficColors[newLoad]);
+                                edges[j].load = newLoad;
+                                edges[j].line.setStyle(trafficColors[newLoad]);
                             }
 
-                            edges[j]['ver'] = newVer;
+                            edges[j].ver = newVer;
                         }
                     }
                 }
@@ -428,7 +541,7 @@
         <br />
         <button id="starter" onclick="selectSource()">Select start</button>
         <button id="dester" onclick="selectDest()">Select destination</button>
-        <div id="map" style="height: 600px"></div>
+        <div id="map" style="height: 400px"></div>
         <table width="100%">
             <tr>
                 <td bgcolor="00FF00">&nbsp;</td>
