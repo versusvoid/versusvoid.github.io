@@ -243,7 +243,7 @@
 				*/
             }
 
-            var path = {source: null, selectingSource: false, dest: undefined, selectingDest: false};
+            var path = {source: null, selectingSource: false, dest: undefined, selectingDest: false, line: null};
             function selectSource()
             {
                 path.selectingSource = true;
@@ -327,6 +327,23 @@
                 else
                 {
                     onMapClick(e);
+                }
+            }
+
+            function findPath()
+            {
+                if( path.source === null || path.dest === null )
+                    return;
+
+                var vert = new Array();
+                vert[0] = path.source.v1;
+                var lengthes = new Array(vertexies.length);
+                for(var i = 0; i < lengthes.length; i++)
+                    lengthes[i] = Number.POSITIVE_INFINITY;
+
+                while( vert.length > 0 )
+                {
+                    
                 }
             }
             
