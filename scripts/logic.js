@@ -654,11 +654,12 @@ function updateMap()
                     if( !updatePath && path.vertexies !== null )
                     {
                         var i1 = path.vertexies.indexOf(i);
+                        var i2 = edges[j].v1 === i1 ? edges[j].v2 : edges[j].v2;
                         // Есть ли вершина в пути и есть ли ребро в пути
                         if( i1 !== -1 && ( 
-                                (path.vertexies.length > i1 + 1 && path.vertexies[i1 + 1] === j)
+                                (path.vertexies.length > i1 + 1 && path.vertexies[i1 + 1] === i2)
                                   ||
-                                (i1 > 0 && path.vertexies[i1 - 1] === j) ) 
+                                (i1 > 0 && path.vertexies[i1 - 1] === i2) ) 
                           )
                         {
                             updatePath = true;
