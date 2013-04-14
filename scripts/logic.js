@@ -118,7 +118,7 @@ var scale = 10000;
 function distance(p1, p2)
 {
     var x = p1.lat*scale - p2.lat*scale;
-    var y = p1.lon*scale - p2.lon*scale;
+    var y = p1.lng*scale - p2.lng*scale;
     return Math.sqrt(x*x + y*y);
 }
 
@@ -154,7 +154,7 @@ function onMapLoaded(json)
                 var v1 = vertexies[v1id];
                 var v2id = idToIndex[way.nodes[i + 1]];
                 var v2 = vertexies[v2id];
-                var points = [new L.LatLng(v1.lat, v1.lon), new L.LatLng(v2.lat, v2.lon)];
+                var points = [new L.LatLng(v1.lat, v1.lng), new L.LatLng(v2.lat, v2.lng)];
                 var polyline = L.polyline(points,
                 {
                     color: trafficColors[1].color,
@@ -213,7 +213,7 @@ function onMapLoaded(json)
             {
                 if (json.elements[j].nodes[i] == nodes[k])
                 {
-                    points[i] = new L.LatLng(json.elements[baseJ + k].lat, json.elements[baseJ + k].lon);
+                    points[i] = new L.LatLng(json.elements[baseJ + k].lat, json.elements[baseJ + k].lng);
                     break;
                 }
             }
@@ -264,7 +264,8 @@ var path =
         selectingDest: false, 
         
         vertexies: null,
-        line: null};
+        line: null
+    };
 
 function clearPath()
 {
@@ -317,9 +318,9 @@ function edgeClicked(e, v1id, v2id)
         if( isBidirect )
         {
             var x1 = vertexies[v1id].lat - e.latlng.lat;
-            var y1 = vertexies[v1id].lon - e.latlng.lon;
+            var y1 = vertexies[v1id].lng - e.latlng.lng;
             var x2 = vertexies[v2id].lat - e.latlng.lat;
-            var y2 = vertexies[v2id].lon - e.latlng.lon;
+            var y2 = vertexies[v2id].lng - e.latlng.lng;
             if( x1*x1 + y1*y1 < x2*x2 + y2*y2 )
             {
                 path.source.edge = {v1: v1id, v2: v2id};
@@ -342,7 +343,6 @@ function edgeClicked(e, v1id, v2id)
                     icon: startIcon
                 }
             ).addTo(map);
-        path.selectingSource = false;
     }
     else if( path.selectingDest )
     {
@@ -356,9 +356,9 @@ function edgeClicked(e, v1id, v2id)
         if( isBidirect )
         {
             var x1 = vertexies[v1id].lat - e.latlng.lat;
-            var y1 = vertexies[v1id].lon - e.latlng.lon;
+            var y1 = vertexies[v1id].lng - e.latlng.lng;
             var x2 = vertexies[v2id].lat - e.latlng.lat;
-            var y2 = vertexies[v2id].lon - e.latlng.lon;
+            var y2 = vertexies[v2id].lng - e.latlng.lng;
             if( x1*x1 + y1*y1 < x2*x2 + y2*y2 )
             {
                 path.dest.edge = {v1: v1id, v2: v2id};
@@ -381,7 +381,6 @@ function edgeClicked(e, v1id, v2id)
                     icon: endIcon
                 }
             ).addTo(map);
-        path.selectingDest = false;
     }
     else
     {
@@ -415,7 +414,7 @@ function findPath()
 
     if( updatingMutex )
     {
-        startTimeout(findPath, 100);
+        setTimeout(findPath, 100);
         return;
     }
 
@@ -479,8 +478,7 @@ function findPath()
     console.log("Stage two");
 
     var pathNodes = [path.dest.edge.v1];
-    console.log(path.dest.edge.v1);
-    var pathPoints = [new L.LatLng(vertexies[path.dest.edge.v1].lat, vertexies[path.dest.edge.v1].lon)];
+    var pathPoints = [new L.LatLng(vertexies[path.dest.edge.v1].lat, vertexies[path.dest.edge.v1].lng)];
     do {
         if( lengthes[pathNodes[0]].from === -1 )
         {
@@ -492,7 +490,7 @@ function findPath()
         pathPoints.unshift(
             new L.LatLng(
                 vertexies[pathNodes[0]].lat, 
-                vertexies[pathNodes[0]].lon));
+                vertexies[pathNodes[0]].lng));
     }
     while( pathNodes[0] !== path.source.edge.v1 && pathNodes.length < 3000 );
 
@@ -516,7 +514,7 @@ function findPath()
     }
     
     path.vertexies = pathNodes;
-    
+
     pathPoints.unshift(path.source.marker.getLatLng());
     pathPoints.push(path.dest.marker.getLatLng());
 
@@ -526,6 +524,12 @@ function findPath()
             color: '#660099',
             opacity: 0.75
         }).addTo(map);
+
+    if( advanceTimeoutId !== undefined )
+    {
+        clearTimeout(advanceTimeoutId);
+    }
+    advanceTimeoutId = setTimeout(advancePath, 3000);
 
     updatingMutex = false;
 }
@@ -544,14 +548,19 @@ function getEdge(v1, v2)
     return null;
 }
 
-var speed = 600;
+var speed = 30;
+
+var advanceTimeoutId;
+
 function advancePath()
 {
     if( updatingMutex )
     {
-        setTimeout(advancePath, 100);
+        advanceTimeoutId = setTimeout(advancePath, 100);
         return;
     }
+
+    advanceTimeoutId = undefined;
 
     if( path.line === null )
     {
@@ -563,25 +572,54 @@ function advancePath()
     var latLngs = path.line.getLatLngs();
     var advancedDistance = 0;
     var nextDistance = distance(latLngs[0], latLngs[1])*
-                         getEdge(path.nodes[0], path.nodes[1]).load;
-    while( latLngs.length > 1 && 
+                         getEdge(path.source.edge.v1, path.source.edge.v2).load;
+    
+    while( path.vertexies.length > 0 && 
              advancedDistance + nextDistance < speed )
     {
+        advancedDistance += nextDistance;
+
         latLngs.shift(); 
-        path.nodes.shift();
-        if( latLngs.length > 1 )
+        if( path.vertexies.length > 1 )
         {
-            nextDistance = distance(latLngs[0], latLngs[1])*
-                             getEdge(path.nodes[0], path.nodes[1]).load;
+            if( path.vertexies[0] === path.source.edge.v1 )
+            {
+                path.source.edge.v2 = path.vertexies[1];
+            }
+            else
+            {
+                path.source.edge.v1 = path.vertexies[1];
+            }
         }
+        else
+        {
+            path.source.edge = path.dest.edge;
+        }
+        path.vertexies.shift();
+       
+        nextDistance = distance(latLngs[0], latLngs[1])*
+                         getEdge(path.source.edge.v1, path.source.edge.v2).load;
     }
 
-    if( latLngs.length < 2 )
+    if( path.vertexies.length === 0 &&
+          nextDistance + advancedDistance <= speed )
     {
+        clearPath();
+    }
+    else
+    {
+        var dif = (speed - advancedDistance) / nextDistance;
+        var newStart = 
+                new L.LatLng(
+                        latLngs[0].lat*(1 - dif) + latLngs[1].lat*dif,
+                        latLngs[0].lng*(1 - dif) + latLngs[1].lng*dif);
         
+        path.source.marker.setLatLng(newStart);
+        path.line.spliceLatLngs(0, 1, newStart);
+
+        advanceTimeoutId = setTimeout(advancePath, 3000);
     }
 
-        
     updatingMutex = false;
 }
 

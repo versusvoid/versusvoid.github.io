@@ -10,10 +10,11 @@
         <script type="text/javascript" src="scripts/logic.js"></script>
     </head>
     <body onload="initMap()">
-        <button id="switch" onclick="switchUpdating()">Start updating</button>
+        <button id="switch" onclick="switchUpdating()">Начать обновление</button>
         <br />
-        <button id="starter" onclick="selectSource()">Select start</button>
-        <button id="dester" onclick="selectDest()">Select destination</button>
+        <button onclick="selectSource()">Выбрать начало пути</button>
+        <button onclick="selectDest()">Выбрать конец пути</button>
+        <button onclick="clearPath()">Очистить путь</button>
         <div id="map" style="height: 400px"></div>
         <table width="100%">
             <tr>
