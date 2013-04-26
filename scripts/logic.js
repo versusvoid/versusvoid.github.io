@@ -68,6 +68,7 @@ function onMapClick(e)
         .openOn(map);
 }
 
+// инициализация карты
 function initMap()
 {
     var apiKey = '460a360c630e43849b9f1ede2511e713';
@@ -81,44 +82,13 @@ function initMap()
     })
         .addTo(map);
 
-    /*
-    var polyline = L.polyline([new L.LatLng(59.91, 30.304), new L.LatLng(59.941, 30.314031)],
-    {
-        color: 'red',
-        opacity: 1
-    })
-        .addTo(map);
-
-    setTimeout(function ()
-    {
-        polyline.setStyle(
-        {
-            color: 'green',
-            opactity: 1
-        });
-    }, 5000);
-    var polygon = L.polygon([
-    [59.96575, 30.23369],
-     [59.96506, 30.27420],
-     [59.96747, 30.28090],
-     [59.97228, 30.28467],
-     [59.98038, 30.31467],
-     [59.97623, 30.32656],
-     [59.96996, 30.33411],
-     [59.95346, 30.34012],
-     [59.94532, 30.30446],
-     [59.96326, 30.23403]
-    ])
-        .addTo(map);
-
-    map.fitBounds(polygon.getBounds());
-    */
-
     map.on('click', onMapClick);
 
+    // загружаем данные карты
     $.getJSON('ways.json', onMapLoaded);
 }
 
+// логическое расстояние между двумя точками на карте
 var scale = 10000;
 function distance(p1, p2)
 {
@@ -127,8 +97,10 @@ function distance(p1, p2)
     return Math.sqrt(x*x + y*y);
 }
 
+// обработчик загрузки данных карты
 function onMapLoaded(json)
 {
+    // извлечение дорог из карты
     var ways = {};
     for (var i = 0; i < json.elements.length; i++)
     {
@@ -152,13 +124,17 @@ function onMapLoaded(json)
         var isOneWay = way['tags']['oneway'] === 'yes';
         for (var i = 0; i < way.nodes.length - 1; i++)
         {
+            // добавление ребра
             if (way.nodes[i] in idToIndex &&
                 way.nodes[i + 1] in idToIndex)
             {
+                // индексы вершин и сами вершины
                 var v1id = idToIndex[way.nodes[i]];
                 var v1 = vertexies[v1id];
                 var v2id = idToIndex[way.nodes[i + 1]];
                 var v2 = vertexies[v2id];
+
+                // добавление ребра на карту
                 var points = [new L.LatLng(v1.lat, v1.lng), new L.LatLng(v2.lat, v2.lng)];
                 var polyline = L.polyline(points,
                 {
@@ -167,6 +143,7 @@ function onMapLoaded(json)
                 })
                     .addTo(map);
 
+                // описание ребра
                 var edge = {
                     v1: Math.min(v1id, v2id),
                     v2: Math.max(v1id, v2id),
@@ -176,6 +153,7 @@ function onMapLoaded(json)
                     ver: 0
                 };
 
+                // добавление обработчика
                 polyline.on('click', function (inV1Id, inV2Id, isBidirect)
                 {
                     return (function (e)
@@ -185,8 +163,9 @@ function onMapLoaded(json)
                     });
                 }(edge.v1, edge.v2, isOneWay));
 
+                // добавляем к вершинам ссылки на рёбра
                 v1.edges.push(edge);
-//                            if( !isOneWay )
+//                if( !isOneWay )
                 {
                     v2.edges.push(edge);
                 }
@@ -199,53 +178,9 @@ function onMapLoaded(json)
             }
         }
     }
-
-    /*
-    var count = 0;
-    for (var j = 0; j < json.elements.length && count < 10000; count++)
-    {
-        var nodes = new Array();
-        var baseJ = j;
-        for (var i = 0; json.elements[j].type === "node" && i < 100000; i++, j++)
-        {
-            nodes[i] = json.elements[j].id;
-        }
-
-        var points = new Array();
-        for (var i = 0; i < json.elements[j].nodes.length; i++)
-        {
-            for (var k = 0; k < nodes.length; k++)
-            {
-                if (json.elements[j].nodes[i] == nodes[k])
-                {
-                    points[i] = new L.LatLng(json.elements[baseJ + k].lat, json.elements[baseJ + k].lng);
-                    break;
-                }
-            }
-        }
-
-        var polyline = L.polyline(points,
-        {
-            color: get_random_color(),
-            opacity: 0.75
-        })
-            .addTo(map);
-
-        polyline.on('click', function (inJ)
-        {
-            return (function ()
-            {
-                console.log(json.elements[inJ]);
-            });
-        }(j));
-
-        while (j < json.elements.length && json.elements[j].type !== "node")
-            j++;
-    }
-    console.log(count + " ways");
-    */
 }
 
+// иконка начала пути
 var startIcon = L.icon({
     iconUrl: 'images/start-marker.png',
     iconSize: [32, 37],
@@ -253,6 +188,7 @@ var startIcon = L.icon({
     popupAnchor: [0, 0],
 });
 
+// иконка конца пути
 var endIcon = L.icon({
     iconUrl: 'images/end-marker.png',
     iconSize: [32, 37],
@@ -260,6 +196,7 @@ var endIcon = L.icon({
     popupAnchor: [0, 0],
 });
 
+// структура описывающая путь
 var path = 
     {
         source: null, 
@@ -272,6 +209,7 @@ var path =
         line: null
     };
 
+// функция стирающая все данные о пути
 function clearPath()
 {
     if( path.source.marker !== null )
@@ -298,16 +236,19 @@ function clearPath()
     }
 }
 
+// переключатель для выбора начала пути
 function selectSource()
 {
     path.selectingSource = true;
     path.selectingDest = false;
 }
+// переключатель для выбора конца пути
 function selectDest()
 {
     path.selectingDest = true;
     path.selectingSource = false;
 }
+// обработчик нажатия на ребро
 function edgeClicked(e, v1id, v2id)
 {
     if( path.selectingSource )
@@ -319,27 +260,8 @@ function edgeClicked(e, v1id, v2id)
         }
         path.source = {marker: null, edge: null};
 
-/*
-        if( isBidirect )
-        {
-            var x1 = vertexies[v1id].lat - e.latlng.lat;
-            var y1 = vertexies[v1id].lng - e.latlng.lng;
-            var x2 = vertexies[v2id].lat - e.latlng.lat;
-            var y2 = vertexies[v2id].lng - e.latlng.lng;
-            if( x1*x1 + y1*y1 < x2*x2 + y2*y2 )
-            {
-                path.source.edge = {v1: v1id, v2: v2id};
-            }
-            else
-            {
-                path.source.edge = {v1: v2id, v2: v1id};
-            }
-        }
-        else
-*/
-        {
-            path.source.edge = {v1: v1id, v2: v2id};
-        }
+        path.source.edge = {v1: v1id, v2: v2id};
+        
         path.source.marker = 
             new L.Marker(
                 new L.LatLng(e.latlng.lat, e.latlng.lng), 
@@ -357,27 +279,9 @@ function edgeClicked(e, v1id, v2id)
             delete path.dest.marker;
         }
         path.dest = {marker: null, edge: null};
-/*        
-        if( isBidirect )
-        {
-            var x1 = vertexies[v1id].lat - e.latlng.lat;
-            var y1 = vertexies[v1id].lng - e.latlng.lng;
-            var x2 = vertexies[v2id].lat - e.latlng.lat;
-            var y2 = vertexies[v2id].lng - e.latlng.lng;
-            if( x1*x1 + y1*y1 < x2*x2 + y2*y2 )
-            {
-                path.dest.edge = {v1: v1id, v2: v2id};
-            }
-            else
-            {
-                path.dest.edge = {v1: v2id, v2: v1id};
-            }
-        }
-        else
-*/
-        {
-            path.dest.edge = {v1: v1id, v2: v2id};
-        }
+
+        path.dest.edge = {v1: v1id, v2: v2id};
+        
         path.dest.marker =
             new L.Marker(
                 new L.LatLng(e.latlng.lat, e.latlng.lng), 
@@ -389,6 +293,7 @@ function edgeClicked(e, v1id, v2id)
     }
     else
     {
+        // если сейчас ничего не выбираем - просто показываем данные ребра
         popup
             .setLatLng(e.latlng)
             .setContent(v1id + " to " + v2id + " " + getEdge(v1id, v2id).length)
@@ -410,8 +315,10 @@ function edgeClicked(e, v1id, v2id)
     }
 }
 
+// мютекс на поиск пути, обновление пути и обновление карты
 var updatingMutex = false;
 
+// поиск пути
 function findPath()
 {
     if( path.source === null || path.dest === null )
@@ -424,7 +331,8 @@ function findPath()
     }
 
     updatingMutex = true;
-
+    
+    // алгоритм Дейкстры
     console.log("Prepare stage");
 
     var currentVertex = path.source.edge.v1;
@@ -482,6 +390,7 @@ function findPath()
     
     console.log("Stage two");
 
+    // восстановление пути
     var pathNodes = [path.dest.edge.v1];
     var pathPoints = [new L.LatLng(vertexies[path.dest.edge.v1].lat, vertexies[path.dest.edge.v1].lng)];
     do {
@@ -506,12 +415,14 @@ function findPath()
         path.line = null;
     }
 
+    // если первое ребро === ребру начала пути - удаляем его
     if( pathNodes[1] === path.source.edge.v2 )
     {
        pathNodes.shift();
        pathPoints.shift();
     }
 
+    // аналогично с концом пути
     if( pathNodes[pathNodes.length - 2] === path.dest.edge.v2 )
     {
         pathNodes.pop();
@@ -539,6 +450,7 @@ function findPath()
     updatingMutex = false;
 }
 
+// ребро из @v1 в @v2
 function getEdge(v1, v2)
 {
     for( var i = 0; i < vertexies[v1].edges.length; i++ )
@@ -553,10 +465,13 @@ function getEdge(v1, v2)
     return null;
 }
 
+// "скорость" движения
 var speed = 30;
 
+// идентификатор таймера продвижения
 var advanceTimeoutId;
 
+// продвижение по пути
 function advancePath()
 {
     if( updatingMutex )
@@ -628,7 +543,9 @@ function advancePath()
     updatingMutex = false;
 }
 
+// идентификатор таймера обновления
 var timeoutId;
+// переключатель обновления
 function switchUpdating()
 {
     if( timeoutId !== undefined )
@@ -647,8 +564,10 @@ function switchUpdating()
     
 }
 
+// итерация(поколение) обновления карты
 var iteration = 0;
 
+// обновление карты
 function updateMap()
 {
     if( updatingMutex )
@@ -693,7 +612,8 @@ function updateMap()
 
                     edges[j].load = newLoad;
                     edges[j].line.setStyle(trafficColors[newLoad]);
-
+                    
+                    // Проверка, задело ли обновление путь
                     if( !updatePath && path.vertexies !== null )
                     {
                         var i1 = path.vertexies.indexOf(i);
