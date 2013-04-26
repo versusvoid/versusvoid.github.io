@@ -1,3 +1,4 @@
+// Генерация случайного цвета
 function get_random_color()
 {
     var letters = '0123456789ABCDEF'.split('');
@@ -9,9 +10,12 @@ function get_random_color()
     return color;
 }
 
+// словарь - id узла из OSM к индексу вершины
 var idToIndex = {};
+// вершины графа
 var vertexies = new Array();
 
+// цвета загруженности рёбер
 var trafficColors = [
     {
         color: "#000000"
@@ -51,10 +55,11 @@ var trafficColors = [
     }
 ];
 
+// объект библиотеки leaflet
 var map;
 
+// выскакивающая иконка с координатами
 var popup = L.popup();
-
 function onMapClick(e)
 {
     popup
