@@ -77,7 +77,7 @@ function initMap()
         .setView([59.96231, 30.30836], 13);
     L.tileLayer('http://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
     {
-        attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Map tiles by CartoDB, under CC BY 3.0.,
+        attribution: 'Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, Map tiles by CartoDB, under CC BY 3.0.',
         maxZoom: 18
     })
         .addTo(map);
